@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 import sklearn as sklearn
 
 # ----------------------------------------------------- Import Data -----------------------------------------------------
-FullData  = pd.read_csv('houseSmallData.csv')                                       # Pull data from file
+# FullData  = pd.read_csv('houseSmallData.csv')                                       # Pull data from file
+FullData  = pd.read_csv('train.csv')
 TrainData = FullData.iloc[0:100, :]                                                 # Grad first 100 rows and all columns
 
 # print(TrainData)
@@ -49,6 +50,7 @@ for i in Indices:
 
     corr = numeric.corr()
     cols = corr['SalePrice'].sort_values(ascending=False)[:i].index
+    # print(cols)
 
     # print(cols)
 
@@ -82,7 +84,10 @@ for i in Indices:
     # TrainData[['SalePrice', 'OverallQual', 'MasVnrArea']]
 
     # ----------------------------------------------------- Test Model ------------------------------------------------------
-    TestData = pd.read_csv('testData.csv')
+    # TestData = pd.read_csv('testData.csv')
+    TestData = pd.read_csv('test.csv')
+    cols = cols.delete(0)
+    # print(cols)
     TestX = TestData[cols]
     TestX = TestX.dropna(axis=0, how='any', thresh=None, subset=None, inplace=False)
     # TestData = TestData.loc[(TestData != 0).any(axis=1),:]
@@ -93,13 +98,16 @@ for i in Indices:
 
     # print(TestX)
     # print("training data", X)
-    TestY = TestX['SalePrice']
-    TestY = np.log(TestY)
+
+    # TestY = TestX['SalePrice']
+    # TestY = np.log(TestY)
+
     # print(Y)
-    TestX = TestX.drop(['SalePrice'], axis=1)
+    # TestX = TestX.drop(['SalePrice'], axis=1)
     # print(X)
 
     TestPredictions = model.predict(TestX)
-    print(f"   Testing  R^2 is: {model.score(TestX,TestY)}\n")
-    sklearn.metrics.mean_squared_error(TestPredictions, TestY)
+    # print(f"   Testing  R^2 is: {model.score(TestX,TestY)}\n")
+    print(f"   Testing  R^2 is: {model.score(TestX,TestPredictions)}\n")
+    # sklearn.metrics.mean_squared_error(TestPredictions, TestY)
     # predictions
