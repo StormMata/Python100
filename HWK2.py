@@ -57,8 +57,6 @@ print(f"   Testing  R^2 is: {model.score(TestX,TestY)}\n")
 sklearn.metrics.mean_squared_error(TestPredictions, TestY)
 
 IDs = TestData['Id']
-print(IDs)
-print(TestPredictions)
 
 file = open("predictions.csv", "w")                                                 # Open csv file
 writer = csv.writer(file)
