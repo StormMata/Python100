@@ -8,106 +8,67 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import sklearn as sklearn
+import csv
 
 # ----------------------------------------------------- Import Data -----------------------------------------------------
-# FullData  = pd.read_csv('houseSmallData.csv')                                       # Pull data from file
 FullData  = pd.read_csv('train.csv')
-TrainData = FullData.iloc[0:100, :]                                                 # Grad first 100 rows and all columns
-
-# print(TrainData)
-
-# SalePrice = TrainData['SalePrice']
-# SalePrice.describe()
-
-# plt.scatter(TrainData['GrLivArea'], y=TrainData['SalePrice'])
-# plt.scatter(TrainData['GarageArea'], y=TrainData['SalePrice'])
+TrainData = FullData.iloc[0:1000, :]                                                 # Grad first 100 rows and all columns
 
 # ----------------------------------------------------- Clean Data ------------------------------------------------------
-# nulls = TrainData.isnull().sum().sort_values(ascending=False)[0:20]
-# type(nulls)
+
 data = TrainData.select_dtypes(include=[np.number]).interpolate().dropna(axis=1)
-# data.shape
 
 # ----------------------------------------- Determine Correlation of Predictors -----------------------------------------
-# numeric = data.select_dtypes(include=[np.number])
-# numeric.head()
 
 Indices = list(range(5,39))
 
-for i in Indices:
-    print("Regression with the top",i,"correlated variables")
-    numeric = data.select_dtypes(include=[np.number])
-    numeric.head()
+# for i in Indices:
+# print("Regression with the top",i,"correlated variables")
+numeric = data.select_dtypes(include=[np.number])
+numeric.head()
 
-    # numeric = numeric.loc[:, (numeric != 0).any(axis=0)]
+numeric = numeric.dropna(axis=0, how='any', thresh=None, subset=None, inplace=False)
 
-    # numeric = numeric.drop(['BsmtFullBath'], axis=1)
-    # numeric = numeric.drop(['BsmtHalfBath'], axis=1)
+corr = numeric.corr()
+cols = corr['SalePrice'].sort_values(ascending=False)[:10].index
 
-    numeric = numeric.dropna(axis=0, how='any', thresh=None, subset=None, inplace=False)
+TrainX = data[cols]
 
-    # numeric = numeric.loc[:, (numeric != 0).any(axis=0)]
+TrainY = TrainX['SalePrice']
 
-    corr = numeric.corr()
-    cols = corr['SalePrice'].sort_values(ascending=False)[:i].index
-    # print(cols)
+TrainX = TrainX.drop(['SalePrice'], axis=1)
 
-    # print(cols)
+# --------------------------------------------------- Create a Model ----------------------------------------------------
+lr = linear_model.LinearRegression()
+model = lr.fit(TrainX, TrainY)
+TrainPredictions = model.predict(TrainX)
 
-    TrainX = data[cols]
+print(f"   Training R^2 is: {model.score(TrainX,TrainY)}")
 
-    # X = X.loc[:, (X != 0).any(axis=0)]
-    # X = X.loc[(X != 0).any(axis=1),:]
-    # X[(X != 0).all(1)]
-    # TrainX = TrainX.loc[(TrainX[:] != 0).all(axis=1)]
+# ----------------------------------------------------- Test Model ------------------------------------------------------
 
-    # nans = numeric.sum()
-    # print(nans)
+TestData = FullData.iloc[1001:1459, :]  
 
-    # print(X)
-    TrainY = TrainX['SalePrice']
-    # print(Y)
-    TrainY = np.log(TrainY)
-    # print(Y)
-    TrainX = TrainX.drop(['SalePrice'], axis=1)
+TestX = TestData[cols]
 
-    # --------------------------------------------------- Create a Model ----------------------------------------------------
-    lr = linear_model.LinearRegression()
-    model = lr.fit(TrainX, TrainY)
-    TrainPredictions = model.predict(TrainX)
-    print(f"   Training R^2 is: {model.score(TrainX,TrainY)}")
+TestY = TestX['SalePrice']
 
-    # plt.hist(Y - predictions)
+TestX = TestX.drop(['SalePrice'], axis=1)
 
-    # plt.scatter(predictions, Y, color='r')
+TestPredictions = model.predict(TestX)
+print(f"   Testing  R^2 is: {model.score(TestX,TestY)}\n")
+sklearn.metrics.mean_squared_error(TestPredictions, TestY)
 
-    # TrainData[['SalePrice', 'OverallQual', 'MasVnrArea']]
+IDs = TestData['Id']
+print(IDs)
+print(TestPredictions)
 
-    # ----------------------------------------------------- Test Model ------------------------------------------------------
-    # TestData = pd.read_csv('testData.csv')
-    TestData = pd.read_csv('test.csv')
-    cols = cols.delete(0)
-    # print(cols)
-    TestX = TestData[cols]
-    TestX = TestX.dropna(axis=0, how='any', thresh=None, subset=None, inplace=False)
-    # TestData = TestData.loc[(TestData != 0).any(axis=1),:]
-    # TestX = TestX.loc[(TestX[:] != 0).all(axis=1)]
+file = open("predictions.csv", "w")
+writer = csv.writer(file)
 
-    # TestData.shape
-    # TestData.head()
+writer.writerow(['Id', 'SalePrice'])
 
-    # print(TestX)
-    # print("training data", X)
+for w in range(1001,1458):
+    writer.writerow([IDs[w], TestPredictions[w-1001]])
 
-    # TestY = TestX['SalePrice']
-    # TestY = np.log(TestY)
-
-    # print(Y)
-    # TestX = TestX.drop(['SalePrice'], axis=1)
-    # print(X)
-
-    TestPredictions = model.predict(TestX)
-    # print(f"   Testing  R^2 is: {model.score(TestX,TestY)}\n")
-    print(f"   Testing  R^2 is: {model.score(TestX,TestPredictions)}\n")
-    # sklearn.metrics.mean_squared_error(TestPredictions, TestY)
-    # predictions
+file.close()
